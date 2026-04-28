@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4f46e5" />
   <title>LearnPal — A Multi-Subject Learning App</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
 </head>
 <body>
 
@@ -14,6 +17,8 @@
       <h1 class="logo">LearnPal</h1>
       <p class="tagline">Learning for ages 3 to grown-ups helping with homework.</p>
 
+      <button id="login-listen" type="button" class="listen-btn" style="margin-bottom:16px">🔊 Read instructions aloud</button>
+
       <form id="login-form" autocomplete="off">
         <label>
           First name
@@ -22,6 +27,16 @@
         <label>
           Last name
           <input id="last-name" name="lastName" type="text" required maxlength="30" placeholder="e.g. Lopez" />
+        </label>
+        <label>
+          Who is using the app?
+          <select id="age-group" name="ageGroup" required>
+            <option value="">Pick one…</option>
+            <option value="1">Little learner (ages 3–6) — slower voice, more pictures</option>
+            <option value="2">Elementary (ages 7–10)</option>
+            <option value="3">Middle school & up (ages 11+)</option>
+            <option value="parent">Parent / grown-up helper</option>
+          </select>
         </label>
         <label>
           4-digit code (used to track your progress)
@@ -35,6 +50,18 @@
         <summary>How does the code work?</summary>
         <p>Your name and 4-digit code create a private profile on this device. Use the same name and code next time to pick up where you left off.</p>
       </details>
+
+      <button id="open-parent-hub" type="button" class="ghost-btn" style="margin-top:14px;width:100%">👨‍👩‍👧 Parent Hub — view all profiles</button>
+    </div>
+  </section>
+
+  <!-- Parent hub screen -->
+  <section id="parent-screen" class="screen">
+    <div class="login-card" style="max-width:720px">
+      <h1 class="logo">Parent Hub</h1>
+      <p class="tagline">All profiles saved on this device.</p>
+      <div id="parent-list"></div>
+      <button id="parent-back" class="primary-btn" type="button" style="margin-top:18px">← Back to Login</button>
     </div>
   </section>
 
@@ -50,6 +77,7 @@
       </div>
       <div class="user-area">
         <span id="user-greeting" class="greeting"></span>
+        <button id="install-btn" class="ghost-btn" type="button" hidden>📥 Install</button>
         <button id="logout-btn" class="ghost-btn" type="button">Sign out</button>
       </div>
     </header>
@@ -63,6 +91,7 @@
       <button class="subj-btn" data-subject="spanish">Spanish</button>
       <button class="subj-btn" data-subject="games">Games</button>
       <button class="subj-btn" data-subject="progress">My Progress</button>
+      <button class="subj-btn" data-subject="manage" id="manage-tab" hidden>Manage Profiles</button>
     </nav>
 
     <main id="content" class="content" tabindex="-1"></main>
