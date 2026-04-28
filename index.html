@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LearnPal — A Multi-Subject Learning App</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Login screen -->
+  <section id="login-screen" class="screen active">
+    <div class="login-card">
+      <h1 class="logo">LearnPal</h1>
+      <p class="tagline">Learning for ages 3 to grown-ups helping with homework.</p>
+
+      <form id="login-form" autocomplete="off">
+        <label>
+          First name
+          <input id="first-name" name="firstName" type="text" required maxlength="30" placeholder="e.g. Maria" />
+        </label>
+        <label>
+          Last name
+          <input id="last-name" name="lastName" type="text" required maxlength="30" placeholder="e.g. Lopez" />
+        </label>
+        <label>
+          4-digit code (used to track your progress)
+          <input id="pin" name="pin" type="password" inputmode="numeric" pattern="\d{4}" maxlength="4" required placeholder="••••" />
+        </label>
+        <button type="submit" class="primary-btn">Start Learning</button>
+        <p id="login-error" class="error" role="alert"></p>
+      </form>
+
+      <details class="hint">
+        <summary>How does the code work?</summary>
+        <p>Your name and 4-digit code create a private profile on this device. Use the same name and code next time to pick up where you left off.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Main app -->
+  <section id="app-screen" class="screen">
+    <header class="app-header">
+      <div class="brand">
+        <span class="logo small">LearnPal</span>
+      </div>
+      <div class="search-wrap">
+        <input id="search" type="search" placeholder="Search lessons (try: fractions, vowels, colors)…" aria-label="Search lessons" />
+        <ul id="search-results" class="search-results" hidden></ul>
+      </div>
+      <div class="user-area">
+        <span id="user-greeting" class="greeting"></span>
+        <button id="logout-btn" class="ghost-btn" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <nav class="subject-nav" aria-label="Subjects">
+      <button class="subj-btn active" data-subject="home">Home</button>
+      <button class="subj-btn" data-subject="math">Math</button>
+      <button class="subj-btn" data-subject="literature">Literature</button>
+      <button class="subj-btn" data-subject="phonics">Phonics</button>
+      <button class="subj-btn" data-subject="english">English</button>
+      <button class="subj-btn" data-subject="spanish">Spanish</button>
+      <button class="subj-btn" data-subject="games">Games</button>
+      <button class="subj-btn" data-subject="progress">My Progress</button>
+    </nav>
+
+    <main id="content" class="content" tabindex="-1"></main>
+
+    <footer class="app-footer">
+      <small>LearnPal · Local progress is stored in your browser only.</small>
+    </footer>
+  </section>
+
+  <!-- Lesson / game modal -->
+  <div id="modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <header class="modal-header">
+        <h2 id="modal-title">Lesson</h2>
+        <button id="modal-close" class="ghost-btn" type="button" aria-label="Close">×</button>
+      </header>
+      <div id="modal-body" class="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="data.js"></script>
+  <script src="games.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
