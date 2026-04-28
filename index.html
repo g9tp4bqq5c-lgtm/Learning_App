@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4f46e5" />
   <title>LearnPal — A Multi-Subject Learning App</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="icon.svg" />
 </head>
 <body>
 
@@ -35,6 +38,18 @@
         <summary>How does the code work?</summary>
         <p>Your name and 4-digit code create a private profile on this device. Use the same name and code next time to pick up where you left off.</p>
       </details>
+
+      <button id="open-parent-hub" type="button" class="ghost-btn" style="margin-top:14px;width:100%">👨‍👩‍👧 Parent Hub — view all profiles</button>
+    </div>
+  </section>
+
+  <!-- Parent hub screen -->
+  <section id="parent-screen" class="screen">
+    <div class="login-card" style="max-width:720px">
+      <h1 class="logo">Parent Hub</h1>
+      <p class="tagline">All profiles saved on this device.</p>
+      <div id="parent-list"></div>
+      <button id="parent-back" class="primary-btn" type="button" style="margin-top:18px">← Back to Login</button>
     </div>
   </section>
 
@@ -50,6 +65,7 @@
       </div>
       <div class="user-area">
         <span id="user-greeting" class="greeting"></span>
+        <button id="install-btn" class="ghost-btn" type="button" hidden>📥 Install</button>
         <button id="logout-btn" class="ghost-btn" type="button">Sign out</button>
       </div>
     </header>

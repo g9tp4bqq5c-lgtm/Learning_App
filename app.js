@@ -10,8 +10,18 @@
 
   let state = {
     user: null,         // { firstName, lastName, pin, key }
-    profile: null,      // { lessonsCompleted: {id: ts}, gameScores: {id: [{score,total,ts}]} }
-    currentSubject: "home"
+    profile: null,      // { firstName, lastName, lessonsCompleted: {id: ts}, gameScores: {id: [{score,total,ts}]} }
+    currentSubject: "home",
+    tierFilter: 0,      // 0 = all, otherwise tier number
+    deferredInstall: null
+  };
+
+  const SUBJECT_LANG = {
+    spanish: "es-ES",
+    math: "en-US",
+    literature: "en-US",
+    phonics: "en-US",
+    english: "en-US"
   };
 
   // ----- Profile storage -----
@@ -40,13 +50,88 @@
   // ----- Auth -----
   function showLogin() {
     $("#login-screen").classList.add("active");
+    $("#parent-screen").classList.remove("active");
     $("#app-screen").classList.remove("active");
+  }
+  function showParent() {
+    $("#login-screen").classList.remove("active");
+    $("#parent-screen").classList.add("active");
+    $("#app-screen").classList.remove("active");
+    renderParentHub();
   }
   function showApp() {
     $("#login-screen").classList.remove("active");
+    $("#parent-screen").classList.remove("active");
     $("#app-screen").classList.add("active");
     $("#user-greeting").textContent = `Hi, ${state.user.firstName}!`;
     renderSubject(state.currentSubject || "home");
+  }
+
+  // ----- Parent Hub -----
+  function listProfiles() {
+    const out = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.startsWith(STORAGE_PREFIX)) continue;
+      try {
+        const data = JSON.parse(localStorage.getItem(k));
+        const tail = k.slice(STORAGE_PREFIX.length);
+        const m = tail.match(/^(.*)_(\d{4})$/);
+        const pin = m ? m[2] : "";
+        const fallback = m ? m[1].replace(/_/g, " ") : tail;
+        out.push({
+          key: k,
+          firstName: data.firstName || fallback,
+          lastName: data.lastName || "",
+          pin,
+          lessons: Object.keys(data.lessonsCompleted || {}).length,
+          games: Object.values(data.gameScores || {}).reduce((n, a) => n + a.length, 0),
+          updated: data.updatedAt || data.createdAt || 0
+        });
+      } catch { /* ignore corrupt */ }
+    }
+    return out.sort((a, b) => b.updated - a.updated);
+  }
+
+  function renderParentHub() {
+    const list = listProfiles();
+    const host = $("#parent-list");
+    if (!list.length) {
+      host.innerHTML = `<p class="parent-empty">No profiles yet. Create one from the login screen.</p>`;
+      return;
+    }
+    host.innerHTML = list.map(p => `
+      <div class="parent-row">
+        <div>
+          <div class="name">${escapeHtml(p.firstName)} ${escapeHtml(p.lastName)}</div>
+          <div class="meta">${p.lessons} lessons · ${p.games} games · last active ${p.updated ? new Date(p.updated).toLocaleDateString() : "—"}</div>
+        </div>
+        <span class="pin" title="4-digit code">${escapeHtml(p.pin)}</span>
+        <button class="ghost-btn" data-del="${escapeHtml(p.key)}">Delete</button>
+      </div>
+    `).join("");
+    host.querySelectorAll("[data-del]").forEach(btn => {
+      btn.onclick = () => {
+        const k = btn.dataset.del;
+        if (confirm("Delete this profile and all its progress?")) {
+          localStorage.removeItem(k);
+          renderParentHub();
+        }
+      };
+    });
+  }
+
+  // ----- Speech -----
+  function speak(text, lang) {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang || "en-US";
+    u.rate = lang && lang.startsWith("es") ? 0.9 : 1.0;
+    window.speechSynthesis.speak(u);
+  }
+  function stopSpeech() {
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
   }
 
   function attemptLogin(e) {
@@ -69,6 +154,8 @@
     const key = userKey(firstName, lastName, pin);
     state.user = { firstName, lastName, pin, key };
     state.profile = loadProfile(key);
+    state.profile.firstName = firstName;
+    state.profile.lastName = lastName;
     sessionStorage.setItem(SESSION_KEY, JSON.stringify({ firstName, lastName, pin }));
     saveProfile();
     showApp();
@@ -150,7 +237,10 @@
     const subj = window.CURRICULUM[subjectKey];
     if (!subj) { root.innerHTML = "<p>Subject not found.</p>"; return; }
 
+    const filter = state.tierFilter || 0;
     const tiersHtml = Object.entries(subj.tiers).map(([tierKey, tier]) => {
+      const tnum = Number(tierKey);
+      const hidden = filter && filter !== tnum ? "hidden" : "";
       const cards = tier.lessons.map(lesson => {
         const isDone = !!state.profile.lessonsCompleted[lesson.id];
         return `
@@ -161,19 +251,33 @@
           </button>`;
       }).join("");
       return `
-        <section class="tier-row">
+        <section class="tier-row ${hidden}" data-tier="${tnum}">
           <h3>${tier.label}<span class="age">${tier.ages}</span></h3>
           <div class="card-grid">${cards}</div>
         </section>`;
     }).join("");
 
+    const chips = [
+      { v: 0, label: "All ages" },
+      { v: 1, label: "Early (3–6)" },
+      { v: 2, label: "Elementary (7–10)" },
+      { v: 3, label: "Middle / Refresher (11+)" }
+    ].map(c => `<button class="tier-chip ${filter === c.v ? "active" : ""}" data-tier="${c.v}">${c.label}</button>`).join("");
+
     root.innerHTML = `
       <h2 class="section-title">${subj.icon} ${subj.label}</h2>
       <p class="section-sub">${subj.description}</p>
+      <div class="tier-filter" role="tablist">${chips}</div>
       ${tiersHtml}
     `;
     $$(".card", root).forEach(card => {
       card.onclick = () => openLesson(card.dataset.subject, card.dataset.lesson);
+    });
+    $$(".tier-chip", root).forEach(chip => {
+      chip.onclick = () => {
+        state.tierFilter = Number(chip.dataset.tier);
+        renderSubjectPage(root, subjectKey);
+      };
     });
   }
 
@@ -192,13 +296,27 @@
     if (!found) return;
     const { lesson, subject } = found;
     const isDone = !!state.profile.lessonsCompleted[lesson.id];
+    const lang = SUBJECT_LANG[subjectKey] || "en-US";
+    const speechSupported = "speechSynthesis" in window;
     openModal(`${subject.icon} ${lesson.title}`, `
-      <div class="lesson-text">${lesson.body}</div>
+      ${speechSupported ? `
+      <div class="listen-row">
+        <button class="listen-btn" id="listen-btn">🔊 Listen</button>
+        <button class="ghost-btn" id="stop-btn">■ Stop</button>
+      </div>` : ""}
+      <div class="lesson-text" id="lesson-body">${lesson.body}</div>
       <div class="complete-row">
         <button class="complete-btn" id="mark-complete">${isDone ? "✓ Already complete" : "Mark complete"}</button>
         <button class="replay-btn" id="back-to-subject">Back to ${escapeHtml(subject.label)}</button>
       </div>
     `);
+    if (speechSupported) {
+      $("#listen-btn").onclick = () => {
+        const text = $("#lesson-body").textContent.replace(/\s+/g, " ").trim();
+        speak(text, lang);
+      };
+      $("#stop-btn").onclick = stopSpeech;
+    }
     $("#mark-complete").onclick = () => {
       state.profile.lessonsCompleted[lesson.id] = Date.now();
       saveProfile();
@@ -365,6 +483,7 @@
     document.body.style.overflow = "hidden";
   }
   function closeModal() {
+    stopSpeech();
     $("#modal").hidden = true;
     $("#modal-body").innerHTML = "";
     document.body.style.overflow = "";
@@ -383,8 +502,37 @@
     $("#logout-btn").addEventListener("click", logout);
 
     $$(".subj-btn").forEach(btn => {
-      btn.addEventListener("click", () => renderSubject(btn.dataset.subject));
+      btn.addEventListener("click", () => {
+        state.tierFilter = 0;
+        renderSubject(btn.dataset.subject);
+      });
     });
+
+    $("#open-parent-hub").addEventListener("click", showParent);
+    $("#parent-back").addEventListener("click", showLogin);
+
+    // Install prompt
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      state.deferredInstall = e;
+      $("#install-btn").hidden = false;
+    });
+    $("#install-btn").addEventListener("click", async () => {
+      if (!state.deferredInstall) return;
+      state.deferredInstall.prompt();
+      await state.deferredInstall.userChoice.catch(() => {});
+      state.deferredInstall = null;
+      $("#install-btn").hidden = true;
+    });
+    window.addEventListener("appinstalled", () => {
+      state.deferredInstall = null;
+      $("#install-btn").hidden = true;
+    });
+
+    // Register service worker (only when served over http(s))
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+      navigator.serviceWorker.register("sw.js").catch(() => { /* no-op */ });
+    }
 
     const search = $("#search");
     search.addEventListener("input", e => runSearch(e.target.value));

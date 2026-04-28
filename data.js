@@ -149,6 +149,22 @@ window.CURRICULUM = {
               <p>The second is <strong>hundredths</strong>. So 0.37 = 3 tenths and 7 hundredths.</p>
               <p>Compare 0.4 and 0.39 → 0.4 is bigger because it equals 0.40.</p>
             `
+          },
+          {
+            id: "math-angles",
+            title: "Geometry: Angles",
+            summary: "Acute, right, obtuse, and straight angles.",
+            keywords: ["angle", "acute", "right", "obtuse", "geometry", "degrees"],
+            body: `
+              <p>An angle is measured in <strong>degrees (°)</strong>.</p>
+              <ul>
+                <li><strong>Acute</strong> — less than 90° (sharp corner)</li>
+                <li><strong>Right</strong> — exactly 90° (square corner) ⌐</li>
+                <li><strong>Obtuse</strong> — between 90° and 180° (wide)</li>
+                <li><strong>Straight</strong> — exactly 180° (a flat line)</li>
+              </ul>
+              <p>The three angles inside a triangle always add up to <strong>180°</strong>.</p>
+            `
           }
         ]
       }
@@ -221,6 +237,23 @@ window.CURRICULUM = {
                 <li><strong>Biography</strong> — a real person's life.</li>
               </ul>
             `
+          },
+          {
+            id: "lit-comprehension",
+            title: "Reading Comprehension Practice",
+            summary: "Read a short passage and find the main idea.",
+            keywords: ["comprehension", "passage", "main idea", "reading"],
+            body: `
+              <h3>Passage: The Lost Kite</h3>
+              <p>Maya took her bright red kite to the park on a windy Saturday. The wind tugged hard on the string, and the kite climbed into the blue sky. Suddenly the string snapped! Maya ran after the kite, but it floated up into a tall tree. A kind neighbor brought a long ladder and helped her get it down.</p>
+              <h3>Questions</h3>
+              <ol>
+                <li>Where did Maya take her kite?<br/><em>Answer: the park</em></li>
+                <li>Why did the kite get away?<br/><em>Answer: the string snapped</em></li>
+                <li>Who helped Maya?<br/><em>Answer: a kind neighbor</em></li>
+              </ol>
+              <p><strong>Main idea:</strong> Even when something goes wrong, a helpful neighbor can save the day.</p>
+            `
           }
         ]
       },
@@ -291,6 +324,21 @@ window.CURRICULUM = {
             body: `
               <p>CVC stands for Consonant-Vowel-Consonant: cat, dog, sun, bed.</p>
               <p>Sound out each letter, then blend them: c-a-t → cat 🐱.</p>
+            `
+          },
+          {
+            id: "phon-blends",
+            title: "Beginning Blends",
+            summary: "Two consonant sounds you blend together.",
+            keywords: ["blends", "bl", "st", "tr", "consonant blends"],
+            body: `
+              <p>A blend is two consonants whose sounds blend together — you still hear both!</p>
+              <ul>
+                <li><strong>bl</strong> — <em>blue, black, blanket</em></li>
+                <li><strong>st</strong> — <em>star, stop, stick</em></li>
+                <li><strong>tr</strong> — <em>tree, train, truck</em></li>
+                <li><strong>fl</strong> — <em>flag, flower, fly</em></li>
+              </ul>
             `
           }
         ]
@@ -408,6 +456,21 @@ window.CURRICULUM = {
                 <li>End punctuation (. ? !)</li>
               </ul>
               <p>"The dog runs." ✅</p>
+            `
+          },
+          {
+            id: "eng-capitalization",
+            title: "Capitalization Rules",
+            summary: "When to use a capital letter.",
+            keywords: ["capital", "uppercase", "proper noun"],
+            body: `
+              <p>Use a capital letter for:</p>
+              <ul>
+                <li>The first word of a sentence.</li>
+                <li>The pronoun <strong>I</strong>.</li>
+                <li>Names of people, places, days, and months: <em>Maria, Texas, Monday, July</em>.</li>
+                <li>Titles of books and movies: <em>Charlotte's Web</em>.</li>
+              </ul>
             `
           }
         ]
@@ -573,6 +636,25 @@ window.CURRICULUM = {
                 <li>ellos habl<strong>an</strong></li>
               </ul>
             `
+          },
+          {
+            id: "sp-preterite",
+            title: "Past Tense (Preterite) -ar Verbs",
+            summary: "Talk about completed actions in the past.",
+            keywords: ["past tense", "preterite", "pretérito", "ar verbs"],
+            body: `
+              <p>The preterite tense describes actions that already finished. For regular -ar verbs, drop -ar and add these endings:</p>
+              <p>Example: hablar → habl-</p>
+              <ul>
+                <li>yo habl<strong>é</strong> — I spoke</li>
+                <li>tú habl<strong>aste</strong> — you spoke</li>
+                <li>él/ella habl<strong>ó</strong> — he/she spoke</li>
+                <li>nosotros habl<strong>amos</strong> — we spoke</li>
+                <li>vosotros habl<strong>asteis</strong> — you all spoke</li>
+                <li>ellos habl<strong>aron</strong> — they spoke</li>
+              </ul>
+              <p>Listen for the accent mark on <em>hablé</em> and <em>habló</em> — it changes the meaning!</p>
+            `
           }
         ]
       }
@@ -606,8 +688,11 @@ window.LESSON_INDEX = (function () {
 window.GAME_CATALOG = [
   { id: "math-add",    subject: "math",      title: "Addition Sprint",       desc: "Quick-fire addition for ages 5+.", icon: "➕" },
   { id: "math-mult",   subject: "math",      title: "Times Table Quiz",      desc: "Multiplication facts up to 12×12.", icon: "✖️" },
+  { id: "math-pizza",  subject: "math",      title: "Fraction Pizza",        desc: "Click pizza slices to make the target fraction.", icon: "🍕" },
   { id: "phon-letter", subject: "phonics",   title: "Letter Sound Match",    desc: "Match letters to the words they start.", icon: "🔤" },
+  { id: "spell-jumble",subject: "phonics",   title: "Spell Jumble",          desc: "Click letters in order to spell the word.", icon: "🧩" },
   { id: "spa-vocab",   subject: "spanish",   title: "Spanish Word Match",    desc: "Match Spanish words to their English meaning.", icon: "🌮" },
+  { id: "mem-match",   subject: "spanish",   title: "Memory Match",          desc: "Flip cards to match Spanish & English pairs.", icon: "🧠" },
   { id: "eng-pos",     subject: "english",   title: "Parts of Speech",       desc: "Tag the underlined word.", icon: "📝" },
   { id: "lit-genre",   subject: "literature", title: "Guess the Genre",      desc: "Identify a story's genre.", icon: "📖" }
 ];

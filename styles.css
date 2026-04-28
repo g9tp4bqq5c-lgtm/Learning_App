@@ -450,6 +450,88 @@ input, select, textarea { font: inherit; }
   color: var(--ink-soft);
 }
 
+/* Parent Hub */
+#parent-screen {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  padding: 24px;
+}
+#parent-screen.active { display: flex; }
+
+.parent-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+}
+.parent-row .name { font-weight: 700; }
+.parent-row .meta { font-size: 13px; color: var(--ink-soft); }
+.parent-row .pin {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  background: var(--primary-soft);
+  color: var(--primary);
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.parent-empty {
+  text-align: center;
+  color: var(--ink-soft);
+  padding: 24px 0;
+}
+
+/* Tier filter chips */
+.tier-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.tier-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--ink);
+  font-size: 14px;
+}
+.tier-chip:hover { background: var(--primary-soft); }
+.tier-chip.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.tier-row.hidden { display: none; }
+
+/* Listen button */
+.listen-row {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.listen-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-weight: 700;
+}
+.listen-btn:hover { background: #d97706; }
+.listen-btn[disabled] { opacity: 0.6; cursor: default; }
+
+/* Install banner / button */
+#install-btn { background: var(--accent); color: #fff; border-color: var(--accent); }
+#install-btn:hover { background: #d97706; }
+
 @media (max-width: 720px) {
   .app-header {
     grid-template-columns: 1fr;
