@@ -17,6 +17,8 @@
       <h1 class="logo">LearnPal</h1>
       <p class="tagline">Learning for ages 3 to grown-ups helping with homework.</p>
 
+      <button id="login-listen" type="button" class="listen-btn" style="margin-bottom:16px">🔊 Read instructions aloud</button>
+
       <form id="login-form" autocomplete="off">
         <label>
           First name
@@ -25,6 +27,16 @@
         <label>
           Last name
           <input id="last-name" name="lastName" type="text" required maxlength="30" placeholder="e.g. Lopez" />
+        </label>
+        <label>
+          Who is using the app?
+          <select id="age-group" name="ageGroup" required>
+            <option value="">Pick one…</option>
+            <option value="1">Little learner (ages 3–6) — slower voice, more pictures</option>
+            <option value="2">Elementary (ages 7–10)</option>
+            <option value="3">Middle school & up (ages 11+)</option>
+            <option value="parent">Parent / grown-up helper</option>
+          </select>
         </label>
         <label>
           4-digit code (used to track your progress)
@@ -79,6 +91,7 @@
       <button class="subj-btn" data-subject="spanish">Spanish</button>
       <button class="subj-btn" data-subject="games">Games</button>
       <button class="subj-btn" data-subject="progress">My Progress</button>
+      <button class="subj-btn" data-subject="manage" id="manage-tab" hidden>Manage Profiles</button>
     </nav>
 
     <main id="content" class="content" tabindex="-1"></main>

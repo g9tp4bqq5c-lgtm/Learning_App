@@ -9,8 +9,8 @@
   const SESSION_KEY = "learnpal:session";
 
   let state = {
-    user: null,         // { firstName, lastName, pin, key }
-    profile: null,      // { firstName, lastName, lessonsCompleted: {id: ts}, gameScores: {id: [{score,total,ts}]} }
+    user: null,         // { firstName, lastName, pin, key, ageGroup }
+    profile: null,      // { firstName, lastName, ageGroup, lessonsCompleted, gameScores, ... }
     currentSubject: "home",
     tierFilter: 0,      // 0 = all, otherwise tier number
     deferredInstall: null
@@ -23,6 +23,24 @@
     phonics: "en-US",
     english: "en-US"
   };
+
+  // Speech rate by age group. Younger = slower, with stronger enunciation.
+  const RATE_BY_AGE = { "1": 0.7, "2": 0.85, "3": 0.95, "parent": 1.0 };
+  const AGE_LABEL = { "1": "Ages 3–6", "2": "Ages 7–10", "3": "Ages 11+", "parent": "Parent" };
+
+  function currentRate() {
+    const ag = state.user && state.user.ageGroup;
+    return RATE_BY_AGE[ag] || 0.9;
+  }
+  function isParent() {
+    return state.user && state.user.ageGroup === "parent";
+  }
+  function defaultTierForAge(ag) {
+    if (ag === "1" || ag === 1) return 1;
+    if (ag === "2" || ag === 2) return 2;
+    if (ag === "3" || ag === 3) return 3;
+    return 0;
+  }
 
   // ----- Profile storage -----
   function userKey(firstName, lastName, pin) {
@@ -63,7 +81,10 @@
     $("#login-screen").classList.remove("active");
     $("#parent-screen").classList.remove("active");
     $("#app-screen").classList.add("active");
-    $("#user-greeting").textContent = `Hi, ${state.user.firstName}!`;
+    const ag = state.user.ageGroup;
+    const pill = ag ? `<span class="age-pill">${escapeHtml(AGE_LABEL[ag] || "")}</span>` : "";
+    $("#user-greeting").innerHTML = `${pill}Hi, ${escapeHtml(state.user.firstName)}!`;
+    $("#manage-tab").hidden = !isParent();
     renderSubject(state.currentSubject || "home");
   }
 
@@ -122,12 +143,18 @@
   }
 
   // ----- Speech -----
-  function speak(text, lang) {
+  // speak(text, lang, opts?) — lang defaults to en-US, opts.rate overrides the
+  // age-driven default. Younger users get a slower rate for clearer enunciation.
+  function speak(text, lang, opts) {
     if (!("speechSynthesis" in window)) return;
+    if (!text) return;
     window.speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = lang || "en-US";
-    u.rate = lang && lang.startsWith("es") ? 0.9 : 1.0;
+    u.rate = (opts && opts.rate) || currentRate();
+    u.pitch = (opts && opts.pitch) || 1.0;
+    // Tiny pause helps low-end voices articulate.
+    u.text = String(text);
     window.speechSynthesis.speak(u);
   }
   function stopSpeech() {
@@ -139,11 +166,16 @@
     const firstName = $("#first-name").value.trim();
     const lastName = $("#last-name").value.trim();
     const pin = $("#pin").value.trim();
+    const ageGroup = $("#age-group").value;
     const err = $("#login-error");
     err.textContent = "";
 
     if (!firstName || !lastName) {
       err.textContent = "Please enter your first and last name.";
+      return;
+    }
+    if (!ageGroup) {
+      err.textContent = "Please pick who is using the app.";
       return;
     }
     if (!/^\d{4}$/.test(pin)) {
@@ -152,11 +184,13 @@
     }
 
     const key = userKey(firstName, lastName, pin);
-    state.user = { firstName, lastName, pin, key };
+    state.user = { firstName, lastName, pin, key, ageGroup };
     state.profile = loadProfile(key);
     state.profile.firstName = firstName;
     state.profile.lastName = lastName;
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ firstName, lastName, pin }));
+    state.profile.ageGroup = ageGroup;
+    state.tierFilter = defaultTierForAge(ageGroup);
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ firstName, lastName, pin, ageGroup }));
     saveProfile();
     showApp();
   }
@@ -174,11 +208,12 @@
     try {
       const raw = sessionStorage.getItem(SESSION_KEY);
       if (!raw) return false;
-      const { firstName, lastName, pin } = JSON.parse(raw);
+      const { firstName, lastName, pin, ageGroup } = JSON.parse(raw);
       if (!firstName || !lastName || !/^\d{4}$/.test(pin)) return false;
       const key = userKey(firstName, lastName, pin);
-      state.user = { firstName, lastName, pin, key };
+      state.user = { firstName, lastName, pin, key, ageGroup: ageGroup || "3" };
       state.profile = loadProfile(key);
+      state.tierFilter = defaultTierForAge(state.user.ageGroup);
       return true;
     } catch { return false; }
   }
@@ -196,7 +231,40 @@
     if (subj === "home") return renderHome(content);
     if (subj === "games") return renderGamesIndex(content);
     if (subj === "progress") return renderProgress(content);
+    if (subj === "manage") return renderManage(content);
     return renderSubjectPage(content, subj);
+  }
+
+  function renderManage(root) {
+    if (!isParent()) {
+      root.innerHTML = `<p class="section-sub">This area is only available for the Parent profile.</p>`;
+      return;
+    }
+    const list = listProfiles();
+    const rows = list.length
+      ? list.map(p => `
+        <div class="parent-row">
+          <div>
+            <div class="name">${escapeHtml(p.firstName)} ${escapeHtml(p.lastName)}</div>
+            <div class="meta">${p.lessons} lessons · ${p.games} games · last active ${p.updated ? new Date(p.updated).toLocaleDateString() : "—"}</div>
+          </div>
+          <span class="pin" title="4-digit code">${escapeHtml(p.pin)}</span>
+          <button class="ghost-btn" data-del="${escapeHtml(p.key)}">Delete</button>
+        </div>`).join("")
+      : `<p class="parent-empty">No child profiles yet.</p>`;
+    root.innerHTML = `
+      <h2 class="section-title">👨‍👩‍👧 Manage Profiles</h2>
+      <p class="section-sub">All learners on this device. Codes shown so you can help kids sign in.</p>
+      ${rows}
+    `;
+    root.querySelectorAll("[data-del]").forEach(btn => {
+      btn.onclick = () => {
+        if (confirm("Delete this profile and all its progress?")) {
+          localStorage.removeItem(btn.dataset.del);
+          renderManage(root);
+        }
+      };
+    });
   }
 
   function renderHome(root) {
@@ -301,18 +369,25 @@
     openModal(`${subject.icon} ${lesson.title}`, `
       ${speechSupported ? `
       <div class="listen-row">
-        <button class="listen-btn" id="listen-btn">🔊 Listen</button>
+        <button class="listen-btn" id="listen-btn">🔊 Listen to the whole lesson</button>
         <button class="ghost-btn" id="stop-btn">■ Stop</button>
+        <small style="color:var(--ink-soft);align-self:center">Tip: tap any 🔊 to hear just that word.</small>
       </div>` : ""}
       <div class="lesson-text" id="lesson-body">${lesson.body}</div>
+      <div id="practice-host"></div>
       <div class="complete-row">
         <button class="complete-btn" id="mark-complete">${isDone ? "✓ Already complete" : "Mark complete"}</button>
         <button class="replay-btn" id="back-to-subject">Back to ${escapeHtml(subject.label)}</button>
       </div>
     `);
+
+    const body = $("#lesson-body");
+    decorateSayElements(body, lang);
+    renderPractice(lesson.practice, $("#practice-host"), lang);
+
     if (speechSupported) {
       $("#listen-btn").onclick = () => {
-        const text = $("#lesson-body").textContent.replace(/\s+/g, " ").trim();
+        const text = body.textContent.replace(/\s+/g, " ").trim();
         speak(text, lang);
       };
       $("#stop-btn").onclick = stopSpeech;
@@ -475,6 +550,84 @@
     });
   }
 
+  // ----- Lesson decoration -----
+  // Adds inline 🔊 buttons after every .say element so users (especially
+  // pre-readers) can click any word/term to hear it pronounced.
+  function decorateSayElements(root, defaultLang) {
+    root.querySelectorAll(".say").forEach(el => {
+      if (el.dataset.decorated === "1") return;
+      el.dataset.decorated = "1";
+      const text = el.dataset.say || el.textContent.trim();
+      const lang = el.dataset.lang || defaultLang || "en-US";
+      const rate = el.dataset.rate ? Number(el.dataset.rate) : null;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "say-btn";
+      btn.setAttribute("aria-label", `Say "${text}"`);
+      btn.textContent = "🔊";
+      btn.onclick = (ev) => {
+        ev.stopPropagation();
+        speak(text, lang, rate ? { rate } : undefined);
+      };
+      el.appendChild(btn);
+    });
+  }
+
+  // Renders structured "practice" array as inline interactive try-it widgets
+  // beneath the lesson body. Each item: { q, options, correct, explain? }.
+  function renderPractice(items, host, lang) {
+    if (!Array.isArray(items) || !items.length) return;
+    const wrap = document.createElement("section");
+    wrap.className = "lesson-section";
+    wrap.innerHTML = `
+      <h3><span class="section-icon">✏️</span>Your Turn — Try It</h3>
+      <p class="lesson-text">Tap an answer. You can listen to the question first if it helps.</p>
+      <div class="ti-host"></div>
+    `;
+    const tiHost = wrap.querySelector(".ti-host");
+    items.forEach((item, idx) => {
+      const card = document.createElement("div");
+      card.className = "try-it";
+      card.innerHTML = `
+        <div class="ti-q">
+          <span>Q${idx + 1}. ${item.q}</span>
+          <button type="button" class="say-btn" data-listen aria-label="Read question aloud">🔊</button>
+        </div>
+        <div class="ti-options">
+          ${item.options.map(o => `<button type="button" class="ti-opt">${escapeHtml(String(o))}</button>`).join("")}
+        </div>
+        <div class="ti-feedback" aria-live="polite"></div>
+      `;
+      card.querySelector("[data-listen]").onclick = (ev) => {
+        ev.stopPropagation();
+        speak(item.q, lang || "en-US");
+      };
+      const opts = card.querySelectorAll(".ti-opt");
+      opts.forEach(btn => {
+        btn.onclick = () => {
+          const choice = btn.textContent;
+          const correct = String(item.correct);
+          const fb = card.querySelector(".ti-feedback");
+          opts.forEach(b => b.disabled = true);
+          if (choice === correct) {
+            btn.classList.add("right");
+            fb.textContent = item.explain ? `Correct! ${item.explain}` : "Correct! ✨";
+            fb.style.color = "var(--good)";
+            speak("Correct!", "en-US");
+          } else {
+            btn.classList.add("wrong");
+            opts.forEach(b => { if (b.textContent === correct) b.classList.add("right"); });
+            fb.textContent = `Not quite. The answer is "${correct}".${item.explain ? " " + item.explain : ""}`;
+            fb.style.color = "var(--bad)";
+            speak(`The answer is ${correct}`, "en-US");
+          }
+        };
+      });
+      tiHost.appendChild(card);
+    });
+    host.appendChild(wrap);
+  }
+
   // ----- Modal -----
   function openModal(title, html) {
     $("#modal-title").textContent = title;
@@ -503,13 +656,29 @@
 
     $$(".subj-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        state.tierFilter = 0;
+        state.tierFilter = defaultTierForAge(state.user && state.user.ageGroup);
         renderSubject(btn.dataset.subject);
       });
     });
 
     $("#open-parent-hub").addEventListener("click", showParent);
     $("#parent-back").addEventListener("click", showLogin);
+
+    // Login screen audible instructions for non-readers.
+    const loginListen = $("#login-listen");
+    if (loginListen) {
+      loginListen.addEventListener("click", () => {
+        speak(
+          "Welcome to LearnPal. First, type your first name. " +
+          "Then type your last name. " +
+          "Next, pick who is using the app: a little learner, elementary, middle school and up, or a parent. " +
+          "Then type a four-digit code that you can remember. " +
+          "Finally, press Start Learning.",
+          "en-US",
+          { rate: 0.8 }
+        );
+      });
+    }
 
     // Install prompt
     window.addEventListener("beforeinstallprompt", (e) => {
